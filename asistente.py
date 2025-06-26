@@ -23,14 +23,21 @@ from productividad import (crear_recordatorio,abrir_calendario,temporizador,modo
 
 
 
-engine = pyttsx3.init()# Inicializa el motor de texto a voz
+engine = pyttsx3.init()  # Inicializa el motor de texto a voz
+
+# Indica si el asistente está en modo silencio. En este modo se ejecutan los
+# comandos pero no se emite respuesta por voz hasta que se indique lo contrario.
+modo_silencio = False
 
 def hablar(texto):
-    engine.say(texto) #prepara lo que se va a decir.
-    engine.runAndWait() #reproduce el texto hablado.
+    """Pronuncia el texto recibido salvo que esté activado el modo silencio."""
+    if modo_silencio:
+        return
+    engine.say(texto)  # Prepara lo que se va a decir
+    engine.runAndWait()  # Reproduce el texto hablado
 
 def escuchar():
-    global modo_espera
+    global modo_espera, modo_silencio
     r = sr.Recognizer() #objeto que "entiende" el audio grabado.
     with sr.Microphone() as source: #abre el micrófono.
         print("Escuchando...")
@@ -40,12 +47,13 @@ def escuchar():
 
             print(f"Dijiste: {texto}")
             return texto.lower() # convierte todo a minúsculas (para evitar problemas al comparar texto luego).
-        except sr.UnknownValueError: #Si el asistente no puede interpretar lo que dijiste, te lo dice y devuelve texto vacío
-            if not modo_espera:
+        except sr.UnknownValueError:  # Si el asistente no entiende lo que dijiste
+            if not modo_silencio:
                 hablar("No entendi lo que dijiste")
             return ""
         except sr.RequestError:
-            hablar("No pude conectarme al servicio de reconocimiento")
+            if not modo_silencio:
+                hablar("No pude conectarme al servicio de reconocimiento")
             return ""
 
 def decir_hora():
@@ -174,7 +182,7 @@ def ejecutar_comando(comando):
         limpieza(hablar)
 
     else:
-        if not modo_espera:
+        if not modo_silencio:
             hablar("No entendí tu orden")
 
 
@@ -184,7 +192,7 @@ escucha_thread = None
 
 def ciclo_escucha():
     """Bucle principal de escucha ejecutado en un hilo."""
-    global modo_espera
+    global modo_espera, modo_silencio
     while not modo_espera:
         comando = escuchar()
         if comando == "":
@@ -196,12 +204,12 @@ def ciclo_escucha():
             break
 
         if 'silencio' in comando:
-            modo_espera = True
             hablar("Entrando en modo silencio...")
-            break
+            modo_silencio = True
+            continue
 
         if 'habla' in comando:
-            modo_espera = False
+            modo_silencio = False
             hablar("Saliendo del modo silencio...")
             continue
 
