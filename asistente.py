@@ -1,5 +1,5 @@
-import speech_recognition as sr  # Biblioteca para convertir voz a texto
-import pyttsx3  # Biblioteca para convertir texto a voz
+import speech_recognition as sr #biblioteca para convertir de voz a texto
+import pyttsx3 #biblioteca para convertir de texto a voz
 from datetime import datetime
 import pywhatkit
 import webbrowser
@@ -12,7 +12,6 @@ import pyautogui
 import os
 import pyautogui
 from datetime import datetime
-import threading
 from abrir_apps import abrir_aplicacion
 from volumen import cambiar_volumen
 from cerrar_apps import cerrar_aplicacion
@@ -177,59 +176,45 @@ def ejecutar_comando(comando):
         if not modo_espera:
             hablar("No entendí tu orden")
 
+hablar("Hola, soy tu asistente. ¿Qué necesitas?")
+modo_espera = False
+while True:
+    comando = escuchar()
 
-modo_espera = True
-escucha_thread = None
+    if comando == "":
+        continue  # No escuchó nada útil
 
+    if 'salir' in comando or 'adios' in comando or 'adiós' in comando or 'termina' in comando:
+        hablar("Hasta luego.")
+        break
 
-def ciclo_escucha():
-    """Bucle principal de escucha ejecutado en un hilo."""
-    global modo_espera
-    while not modo_espera:
-        comando = escuchar()
-        if comando == "":
-            continue
+    if 'silencio' in comando:
+        modo_espera = True
+        hablar("Entrando en modo silencio...")
+        continue
 
-        if 'salir' in comando or 'adios' in comando or 'adiós' in comando or 'termina' in comando:
-            hablar("Hasta luego.")
-            modo_espera = True
-            break
-
-        if 'silencio' in comando:
-            modo_espera = True
-            hablar("Entrando en modo silencio...")
-            break
-
-        if 'habla' in comando:
-            modo_espera = False
-            hablar("Saliendo del modo silencio...")
-            continue
-
-        ejecutar_comando(comando)
+    if 'habla' in comando:
+        modo_espera = False
+        hablar("Saliendo del modo silencio...")
 
 
-def activar_asistente():
-    """Activa el asistente y comienza el hilo de escucha."""
-    global escucha_thread, modo_espera
-    if not modo_espera:
-        return  # Ya estaba activo
-    modo_espera = False
-    hablar("Asistente activado")
-    escucha_thread = threading.Thread(target=ciclo_escucha, daemon=True)
-    escucha_thread.start()
+    ejecutar_comando(comando)
 
 
-def desactivar_asistente():
-    """Detiene el asistente y vuelve al modo espera."""
-    global modo_espera
-    if modo_espera:
-        return
-    modo_espera = True
-    hablar("Asistente desactivado")
+Tengo un proyecto de asistente de voz basado en Python que actualmente funciona con un bucle que escucha comandos de voz continuamente.
 
+Quiero mejorar el proyecto para que el asistente:
 
-if __name__ == "__main__":
-    hablar("Modo espera. Pulsa F9 para activar el asistente")
-    keyboard.add_hotkey('F9', activar_asistente)
-    keyboard.add_hotkey('F10', desactivar_asistente)
-    keyboard.wait()
+No se active automáticamente ni escuche al iniciar el programa, sino que permanezca en modo espera.
+
+Se active solo cuando el usuario presione una tecla específica, por ejemplo F9.
+
+Una vez activado, el asistente debe comenzar a escuchar y procesar comandos de voz normalmente.
+
+El asistente debe poder desactivarse con otra tecla, por ejemplo F10, dejando de escuchar y volviendo a modo espera.
+
+Durante todo el tiempo, el programa debe ejecutarse en segundo plano sin bloquear la interfaz ni abrir ventanas molestas.
+
+Usa la librería keyboard para detectar pulsaciones globales y threading para manejar la escucha en un hilo separado.
+
+Por favor, genera un código Python claro y comentado que implemente esta funcionalidad, integrando la activación/desactivación con F9 y F10, y mostrando mensajes de voz indicando el cambio de estado.
